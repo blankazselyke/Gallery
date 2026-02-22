@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+
+{% block title %}Sign Up{% endblock %}
+
+{% block content %}
+<div class="p-4">
+    <h2 class="text-center mb-4">Create Account</h2>
+    <form method="post" novalidate>
+        {% csrf_token %}
+        
+        {% for field in form %}
+            <div class="mb-3">
+                <label class="form-label fw-bold">{{ field.label }}</label>
+                {{ field }}
+                {% if field.help_text %}
+                    <div class="form-text text-muted" style="font-size: 0.85rem;">
+                        {{ field.help_text|safe }}
+                    </div>
+                {% endif %}
+                {% for error in field.errors %}
+                    <div class="text-danger small mt-1">● {{ error }}</div>
+                {% endfor %}
+            </div>
+        {% endfor %}
+
+        <div class="d-grid gap-2 mt-4">
+            <button type="submit" class="btn btn-success">Register</button>
+        </div>
+    </form>
+    <hr>
+    <p class="text-center mb-0">Already have an account? <a href="{% url 'login' %}">Login</a></p>
+</div>
+
+<style>
+    /* Szebbé tesszük a Django alap mezőit, hogy illeszkedjenek a Bootstraps-hez */
+    input[type="text"], input[type="password"], input[type="email"] {
+        display: block;
+        width: 100%;
+        padding: 0.375rem 0.75rem;
+        font-size: 1rem;
+        font-weight: 400;
+        line-height: 1.5;
+        color: #212529;
+        background-color: #fff;
+        border: 1px solid #ced4da;
+        border-radius: 0.375rem;
+        transition: border-color .15s ease-in-out,box-shadow .15s ease-in-out;
+    }
+    input:focus {
+        border-color: #86b7fe;
+        outline: 0;
+        box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, .25);
+    }
+    /* Eltüntetjük a Django alapértelmezett felsorolásjeleit a súgónál */
+    .form-text ul { list-style: none; padding-left: 0; margin-bottom: 0; }
+</style>
+{% endblock %}
