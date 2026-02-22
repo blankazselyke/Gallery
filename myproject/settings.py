@@ -73,10 +73,11 @@ WSGI_APPLICATION = 'myproject.wsgi.application'
 
 # Database
 # https://docs.djangoproject.com/en/6.0/ref/settings/#databases
-
-if os.environ.get('GAE_ENV') == 'standard':
+if os.environ.get('GAE_ENV') == 'standard' or os.path.exists('/workspace'):
+    MEDIA_ROOT = '/tmp/media'
     db_path = os.path.join('/tmp', 'db.sqlite3')
 else:
+    MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
     db_path = BASE_DIR / 'db.sqlite3'
 
 DATABASES = {
@@ -85,6 +86,8 @@ DATABASES = {
         'NAME': db_path,
     }
 }
+
+MEDIA_URL = '/media/'
 
 
 # Password validation
@@ -122,15 +125,6 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/6.0/howto/static-files/
 
 STATIC_URL = 'static/'
-
-# Media files (uploads)
-
-if os.environ.get('GAE_ENV') == 'standard':
-    MEDIA_ROOT = os.path.join('/tmp', 'media')
-else:
-    MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
-
-MEDIA_URL = '/media/'
 
 LOGOUT_METHODS = ('GET', 'POST')
 
