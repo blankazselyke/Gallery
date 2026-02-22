@@ -124,8 +124,13 @@ USE_TZ = True
 STATIC_URL = 'static/'
 
 # Media files (uploads)
+
+if os.environ.get('GAE_ENV') == 'standard':
+    MEDIA_ROOT = os.path.join('/tmp', 'media')
+else:
+    MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+
 MEDIA_URL = '/media/'
-MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
 LOGOUT_METHODS = ('GET', 'POST')
 

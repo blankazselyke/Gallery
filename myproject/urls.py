@@ -25,5 +25,5 @@ urlpatterns = [
 ]
 
 # This serves the uploaded images during development
-if settings.DEBUG:
+if settings.DEBUG or os.environ.get('GAE_ENV') == 'standard':
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
