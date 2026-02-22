@@ -1,7 +1,7 @@
 runtime: python311
 env: standard
 
-entrypoint: gunicorn -b :$PORT myproject.wsgi
+entrypoint: sh startup.sh
 
 handlers:
 - url: /static
