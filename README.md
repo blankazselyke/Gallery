@@ -5,6 +5,8 @@ This project is a web-based photo album application developed using the Django f
 
 The system allows users to upload images with custom titles. Once uploaded, the images are displayed in a responsive gallery where users can sort them based on different criteria. Security is a key aspect of the project, as the system ensures that only the owners of the photos can delete their own content.
 
+The applicationcan be accessed at the following address: [https://gallery-488215.ey.r.appspot.com](https://gallery-488215.ey.r.appspot.com)
+
 ## Key Features
 
 ### User Management
@@ -18,7 +20,6 @@ The application provides an interactive sorting feature. Users can view photos i
 
 ### Secure Deletion
 To prevent data loss and unauthorized actions, the delete function is protected. A user can only see the delete button for photos they have uploaded themselves. When clicking delete, a confirmation modal (popup) appears to prevent accidental deletions.
-
 
 
 ## Technical Architecture
