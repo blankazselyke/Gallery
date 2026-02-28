@@ -30,31 +30,30 @@ The backend is powered by Python and the Django web framework. Django follows th
 The frontend uses HTML5 and CSS3 for structure and styling. Bootstrap 5.3 is used as the primary CSS framework to ensure a modern look and responsive behavior. JavaScript is used for the Bootstrap Modal components that handle the delete confirmations.
 
 ### Database
-In the local development phase, the application uses an SQLite database. This is a file-based database that is excellent for development. When the application is moved to a PaaS provider like Google Cloud, this can be easily migrated to a managed SQL service.
-
+Currently the application uses an SQLite database. This is a file-based database that is excellent for development.
 
 
 ## Cloud Deployment (PaaS)
-The application is ready to be deployed to a Platform-as-a-Service (PaaS) provider, specifically Google Cloud App Engine.
+The application is deployed to **Google Cloud App Engine (Standard Environment)**. This environment provides automatic scaling and a fully managed Python 3.11 runtime.
 
-### Requirements for Deployment
-- requirements.txt: This file contains all the necessary Python libraries (Django, Pillow, Gunicorn) that the cloud server needs to install.
-- app.yaml: This is the configuration file for Google App Engine, defining the Python runtime and the entry point for the web server.
+### Read-Only File System Challenges
+Google App Engine Standard uses a **read-only file system** for the application directory (`/workspace`). To handle this, the application uses the following architectural workarounds:
+- **Temporary Storage**: Both the SQLite database and user-uploaded media files are redirected to the `/tmp` directory, which is the only writable area in this environment.
+- **Ephemeral Data**: Since `/tmp` is cleared whenever the application instance restarts, the system is designed to be stateless. A startup script ensures the environment is ready upon every boot.
 
-### Continuous Integration
-The project is set up to work with GitHub. By connecting the repository to Google Cloud Build, every time a new version of the code is pushed to the main branch, the cloud provider automatically builds and updates the live application.
+### Deployment Configuration Files
+The deployment relies on four key configuration files:
+- **`app.yaml`**: Defines the Python 3.11 runtime and sets the `entrypoint` to execute a shell script instead of the default server command.
+- **`requirements.txt`**: Lists dependencies (Django, Pillow, etc.).
+- **`cloudbuild.yaml`**: Custom build instructions for Google Cloud Build.
+- **`startup.sh`**: A shell script executed on boot that:
+    1. Creates the necessary directory structure in `/tmp/media/photos`.
+    2. Runs `python manage.py migrate` to initialize the database in temporary storage.
+    3. Programmatically creates a default superuser (`admin`) if it doesn't exist.
+    4. Starts the production web server using `gunicorn`.
 
-## Installation for Local Development
-
-1. Clone the repository from GitHub.
-2. Create a virtual environment using 'python -m venv .venv'.
-3. Activate the virtual environment.
-4. Install the requirements using 'pip install -r requirements.txt'.
-5. Run 'python manage.py migrate' to set up the local SQLite database.
-6. Use 'python manage.py runserver' to start the application at http://127.0.0.1:8000/.
-
-## Security Implementation
-The application follows modern security standards:
-- CSRF (Cross-Site Request Forgery) tokens are used on all forms to prevent malicious attacks.
-- Access decorators like @login_required are used on views to protect pages from unauthenticated access.
-- Permission checks are performed in the backend before any data deletion occurs.
+### Continuous Integration & Deployment (CI/CD)
+The project utilizes **Google Cloud Build** connected via a GitHub Trigger:
+1. **Trigger**: Any push to the `main` branch on GitHub automatically invokes a new build.
+2. **Configuration**: The trigger is configured to use the `cloudbuild.yaml` file from the repository.
+3. **Automated Deployment**: Cloud Build executes the `gcloud app deploy` command, ensuring the live version always matches the latest stable code.
