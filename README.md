@@ -31,27 +31,32 @@ The backend is powered by Python and the Django web framework. Django follows th
 The frontend uses HTML5 and CSS3 for structure and styling. Bootstrap 5.3 is used as the primary CSS framework to ensure a modern look and responsive behavior. JavaScript is used for the Bootstrap Modal components that handle the delete confirmations.
 
 ### Database
-Currently the application uses an SQLite database. This is a file-based database that is excellent for development.
-
+The application utilizes a dual-database approach depending on the environment:
+- **Development**: An SQLite database is used locally for rapid development and testing.
+- **Production**: A fully managed, serverless **Neon PostgreSQL** database is used to ensure persistent, scalable, and secure data storage in the cloud.
 
 ## Cloud Deployment (PaaS)
 The application is deployed to **Google Cloud App Engine (Standard Environment)**. This environment provides automatic scaling and a fully managed Python 3.11 runtime.
 
-### Read-Only File System Challenges
-Google App Engine Standard uses a **read-only file system** for the application directory (`/workspace`). To handle this, the application uses the following architectural workarounds:
-- **Temporary Storage**: Both the SQLite database and user-uploaded media files are redirected to the `/tmp` directory, which is the only writable area in this environment.
-- **Ephemeral Data**: Since `/tmp` is cleared whenever the application instance restarts, the system is designed to be stateless. A startup script ensures the environment is ready upon every boot.
+### Data Storage and Architecture
+Google App Engine Standard uses a **read-only file system** for the application directory (`/workspace`). To overcome this limitation and ensure user data persists across server restarts and deployments, the application integrates external managed cloud services:
+- **Persistent Database (Neon)**: The application uses a fully managed, serverless **Neon PostgreSQL** database to ensure persistent, scalable, and secure data storage in the cloud. User credentials, photo metadata, and upload logs are securely stored in this remote instance.
+- **Cloud Storage (GCS)**: User-uploaded media files are directly routed to a **Google Cloud Storage** bucket. The bucket is configured with Uniform Bucket-Level Access and public read permissions, allowing direct, fast image serving without the need to generate signed URLs dynamically.
+
+### Security and Secret Management
+To adhere to modern DevSecOps standards, sensitive credentials are never hardcoded into the repository:
+- **Google Secret Manager**: Production secrets—such as the Django `SECRET_KEY`, Neon `DATABASE_URL`, and the GCS bucket name—are stored securely in Google Secret Manager.
+- **IAM Authorization**: The App Engine instance leverages its default service account, which is granted the "Secret Manager Secret Accessor" role, to fetch these secrets programmatically at runtime.
 
 ### Deployment Configuration Files
-The deployment relies on four key configuration files:
-- **`app.yaml`**: Defines the Python 3.11 runtime and sets the `entrypoint` to execute a shell script instead of the default server command.
-- **`requirements.txt`**: Lists dependencies (Django, Pillow, etc.).
-- **`cloudbuild.yaml`**: Custom build instructions for Google Cloud Build.
-- **`startup.sh`**: A shell script executed on boot that:
-    1. Creates the necessary directory structure in `/tmp/media/photos`.
-    2. Runs `python manage.py migrate` to initialize the database in temporary storage.
-    3. Programmatically creates a default superuser (`admin`) if it doesn't exist.
-    4. Starts the production web server using `gunicorn`.
+The deployment relies on several key configuration files:
+- **`app.yaml`**: Defines the Python 3.11 runtime and sets the `entrypoint` to execute a custom shell script instead of the default server command.
+- **`requirements.txt`**: Lists all dependencies, including specific cloud libraries (`dj-database-url`, `psycopg2-binary`, `django-storages[google]`, and `google-cloud-secret-manager`).
+- **`cloudbuild.yaml`**: Custom build instructions for Google Cloud Build, configured for secure cloud logging.
+- **`startup.sh`**: A streamlined shell script executed on boot that:
+    1. Runs `python manage.py migrate` to apply database schemas to the remote PostgreSQL instance.
+    2. Programmatically creates a default superuser (`admin`) if it doesn't exist.
+    3. Starts the production web server using `gunicorn`.
 
 ### Continuous Integration & Deployment (CI/CD)
 The project utilizes **Google Cloud Build** connected via a GitHub Trigger:
