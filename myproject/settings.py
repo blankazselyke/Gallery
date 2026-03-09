@@ -98,6 +98,7 @@ else:
 
 if os.environ.get('GAE_ENV') == 'standard':
     GS_BUCKET_NAME = get_secret('GS_BUCKET_NAME')
+    GS_QUERYSTRING_AUTH = False
     #GS_DEFAULT_ACL = 'publicRead'
     MEDIA_URL = f'https://storage.googleapis.com/{GS_BUCKET_NAME}/'
     
