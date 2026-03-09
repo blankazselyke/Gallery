@@ -32,7 +32,8 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 SECRET_KEY = os.environ.get('SECRET_KEY', 'ideiglenes-kulcs-fejleszteshez')
 
-DEBUG = os.environ.get('GAE_ENV') != 'standard'
+DEBUG = True
+# DEBUG = os.environ.get('GAE_ENV') != 'standard'
 
 ALLOWED_HOSTS = ['*']
 
