@@ -11,6 +11,7 @@ https://docs.djangoproject.com/en/6.0/ref/settings/
 """
 
 from pathlib import Path
+import dj_database_url
 import os
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -72,20 +73,23 @@ WSGI_APPLICATION = 'myproject.wsgi.application'
 
 
 # Database
-# https://docs.djangoproject.com/en/6.0/ref/settings/#databases
-if os.environ.get('GAE_ENV') == 'standard' or os.path.exists('/workspace'):
-    MEDIA_ROOT = '/tmp/media'
-    db_path = os.path.join('/tmp', 'db.sqlite3')
-else:
-    MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
-    db_path = BASE_DIR / 'db.sqlite3'
-
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': db_path,
+if os.environ.get('GAE_ENV') == 'standard' or os.environ.get('DATABASE_URL'):
+    # A felhőben a Neon PostgreSQL-t használjuk
+    DATABASES = {
+        'default': dj_database_url.config(
+            default=os.environ.get('DATABASE_URL'),
+            conn_max_age=600,
+            conn_health_checks=True,
+        )
     }
-}
+else:
+    # A saját gépeden marad a lokális SQLite
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': BASE_DIR / 'db.sqlite3',
+        }
+    }
 
 MEDIA_URL = '/media/'
 
