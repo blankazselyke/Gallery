@@ -3,9 +3,6 @@ env: standard
 
 entrypoint: sh startup.sh
 
-env_variables:
-  DATABASE_URL: "postgresql://neondb_owner:npg_60miPnSMbsLW@ep-tiny-lab-aljinp6m-pooler.c-3.eu-central-1.aws.neon.tech/neondb?sslmode=require&channel_binding=require"
-
 handlers:
 - url: /static
   static_dir: static/

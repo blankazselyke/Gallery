@@ -11,23 +11,33 @@ https://docs.djangoproject.com/en/6.0/ref/settings/
 """
 
 from pathlib import Path
+from google.cloud import secretmanager
 import dj_database_url
 import os
+
+def get_secret(secret_id):
+    if os.environ.get('GAE_ENV') == 'standard':
+        client = secretmanager.SecretManagerServiceClient()
+        project_id = os.environ.get('GOOGLE_CLOUD_PROJECT')
+        name = f"projects/{project_id}/secrets/{secret_id}/versions/latest"
+        response = client.access_secret_version(request={"name": name})
+        return response.payload.data.decode("UTF-8")
+    
+    # Lokálisan (vagy ha nincs beállítva) marad a környezeti változó
+    return os.environ.get(secret_id)
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 
-# Quick-start development settings - unsuitable for production
-# See https://docs.djangoproject.com/en/6.0/howto/deployment/checklist/
+SECRET_KEY = os.environ.get('SECRET_KEY', 'ideiglenes-kulcs-fejleszteshez')
 
-# SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-ewz)h1u38z5)k+&8(skn%vju&bzc)acjh0=#y^fy90==)tnvb%'
-
-# SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = os.environ.get('GAE_ENV') != 'standard'
 
 ALLOWED_HOSTS = ['*']
+
+STATIC_URL = 'static/'
+STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 
 
 # Application definition
@@ -72,18 +82,12 @@ TEMPLATES = [
 WSGI_APPLICATION = 'myproject.wsgi.application'
 
 
-# Database
-if os.environ.get('GAE_ENV') == 'standard' or os.environ.get('DATABASE_URL'):
-    # A felhőben a Neon PostgreSQL-t használjuk
+if os.environ.get('GAE_ENV') == 'standard':
+    DATABASE_URL = get_secret('DATABASE_URL')
     DATABASES = {
-        'default': dj_database_url.config(
-            default=os.environ.get('DATABASE_URL'),
-            conn_max_age=600,
-            conn_health_checks=True,
-        )
+        'default': dj_database_url.config(default=DATABASE_URL)
     }
 else:
-    # A saját gépeden marad a lokális SQLite
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.sqlite3',
@@ -91,7 +95,26 @@ else:
         }
     }
 
-MEDIA_URL = '/media/'
+if os.environ.get('GAE_ENV') == 'standard':
+    GS_BUCKET_NAME = get_secret('GS_BUCKET_NAME')
+    GS_DEFAULT_ACL = 'publicRead'
+    MEDIA_URL = f'https://storage.googleapis.com/{GS_BUCKET_NAME}/'
+    
+    STORAGES = {
+        "default": {
+            "BACKEND": "storages.backends.gcloud.GoogleCloudStorage",
+        },
+        "staticfiles": {
+            "BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage",
+        },
+    }
+else:
+    MEDIA_URL = '/media/'
+    MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+
+
+if os.environ.get('GAE_ENV') == 'standard':
+    SECRET_KEY = get_secret('SECRET_KEY')
 
 
 # Password validation
