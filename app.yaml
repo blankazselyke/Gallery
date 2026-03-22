@@ -4,7 +4,7 @@ instance_class: F1  # The weakest server to test scaling (256MB RAM, 600MHz CPU)
 
 automatic_scaling:
   target_cpu_utilization: 0.5  # If CPU usage exceeds 50%, start scaling up
-  target_concurrent_requests: 15 # If more than 15 concurrent requests, start scaling up
+  max_concurrent_requests: 15 # If more than 15 concurrent requests, start scaling up
   min_instances: 1
   max_instances: 5             # Maximum 5 instances to handle traffic spikes
   max_idle_instances: 1 
